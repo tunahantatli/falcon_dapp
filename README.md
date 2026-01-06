@@ -1,59 +1,114 @@
-# `falcon_dapp`
+# 🦅 Falcon Dapp: Decentralized Decision Intelligence
 
-Welcome to your new `falcon_dapp` project and to the Internet Computer development community. By default, creating a new project adds this README and some template files to your project directory. You can edit these template files to customize your project and to include your own code to speed up the development cycle.
+![ICP](https://img.shields.io/badge/Blockchain-Internet%20Computer-purple?style=flat&logo=internetcomputer)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Status](https://img.shields.io/badge/Status-Development-blue)
 
-To get started, you might want to explore the project directory structure and the default configuration file. Working with this project in your development environment will not affect any production deployment or identity tokens.
+**Falcon Dapp** is a SaaS-based cryptocurrency market analysis platform that leverages **Temporal Convolutional Networks (TCN)** to provide real-time decision support scores (0-100) for traders.
 
-To learn more before you start working with `falcon_dapp`, see the following documentation available online:
+Built on the **Internet Computer (ICP)**, Falcon Dapp introduces a **trustless subscription model** by verifying **EVM-based payments (BSC/Arbitrum)** directly via **ICP HTTPS Outcalls**, eliminating the need for centralized backend servers or bridges.
 
-- [Quick Start](https://internetcomputer.org/docs/current/developer-docs/setup/deploy-locally)
-- [SDK Developer Tools](https://internetcomputer.org/docs/current/developer-docs/setup/install)
-- [Motoko Programming Language Guide](https://internetcomputer.org/docs/current/motoko/main/motoko)
-- [Motoko Language Quick Reference](https://internetcomputer.org/docs/current/motoko/main/language-manual)
+---
 
-If you want to start working on your project right away, you might want to try the following commands:
+## 🚀 The Vision: Why Falcon?
 
-```bash
-cd falcon_dapp/
-dfx help
-dfx canister --help
-```
+Cryptocurrency markets are volatile and complex. Most traders lose money due to emotional decisions or lack of data processing capacity.
 
-## Running the project locally
+**Falcon Dapp is NOT a trading bot.** It is a **Decision Support System.**
+Instead of executing trades on behalf of the user, it processes historical data, market volume, and whale movements to generate a simple **"Trade Suitability Score" (0-100)**.
 
-If you want to test your project locally, you can use the following commands:
+### Why ICP? (Chain Fusion Showcase)
+Falcon Dapp serves as a prime example of **"Chain Fusion"** and **"Decentralized AI Orchestration"**:
 
-```bash
-# Starts the replica, running in the background
-dfx start --background
+1.  **Cross-Chain SaaS:** We demonstrate how to sell a service on ICP while accepting payments from EVM chains (USDT on BSC/Arbitrum) without off-chain verifiers.
+2.  **Hybrid AI Architecture:** Heavy AI computation (TCN Model) runs on **Render Network/GPU Workers**, while the results are cryptographically signed and stored immutably on **ICP Canisters**.
+3.  **Real Utility:** A subscription-based dApp that burns cycles regularly, contributing to the ICP deflationary economy.
 
-# Deploys your canisters to the replica and generates your candid interface
-dfx deploy
-```
+---
 
-Once the job completes, your application will be available at `http://localhost:4943?canisterId={asset_canister_id}`.
+## 🏗 System Architecture
 
-If you have made changes to your backend canister, you can generate a new candid interface with
+Falcon Dapp consists of three main pillars:
 
-```bash
-npm run generate
-```
+### 1. The Frontend (Asset Canister)
+* **Tech:** React.js, Tailwind CSS, Motoko.
+* **Function:** Wallet connection (MetaMask/Rabby), Dashboard visualization (Standard vs. Pro views), and Payment initiation.
+* **Hosting:** Fully decentralized on ICP Asset Canister.
 
-at any time. This is recommended before starting the frontend development server, and will be run automatically any time you run `dfx deploy`.
+### 2. The Backend (Membership & Signal Canisters)
+* **Tech:** Motoko / Rust.
+* **Key Feature - Trustless Payment Verification:**
+    * Uses **HTTPS Outcalls** to query EVM RPC nodes directly.
+    * Verifies transaction hashes (`TxHash`) to confirm 15 USDT subscription payments.
+    * Manages user access (Standard/Pro) and expiration (30-day logic).
 
-If you are making frontend changes, you can start a development server with
+### 3. The AI Engine (Off-Chain Worker)
+* **Tech:** Python, PyTorch (TCN Model).
+* **Function:** Processes market data 24/7.
+* **Security:** Pushes signals to the ICP Canister with **Ed25519 signatures** to ensure data integrity.
 
-```bash
-npm start
-```
+> **⚠️ NOTE ON PROPRIETARY IP**
+>
+> This repository contains the source code for the **ICP On-Chain Infrastructure** (Frontend & Canisters).
+>
+> The **TCN AI Model** and worker scripts are proprietary intellectual property and are hosted in a private repository to protect the commercial viability of the project. They interact with this dApp via authenticated ingress messages.
 
-Which will start a server at `http://localhost:8080`, proxying API requests to the replica at port 4943.
+---
 
-### Note on frontend environment variables
+## 💰 Business Model
 
-If you are hosting frontend code somewhere without using DFX, you may need to make one of the following adjustments to ensure your project does not fetch the root key in production:
+Falcon Dapp operates on a straightforward subscription model:
 
-- set`DFX_NETWORK` to `ic` if you are using Webpack
-- use your own preferred method to replace `process.env.DFX_NETWORK` in the autogenerated declarations
-  - Setting `canisters -> {asset_canister_id} -> declarations -> env_override to a string` in `dfx.json` will replace `process.env.DFX_NETWORK` with the string in the autogenerated declarations
-- Write your own `createActor` constructor
+* **Standard Plan (7.99 USDT):** Basic TCN Scores.
+* **Pro Plan (15.00 USDT):** Detailed Analytics + News/Whale Scores.
+
+**User Flow:**
+1.  Connect EVM Wallet to the dApp.
+2.  Sign a transaction to pay subscription fee (on BSC/Arbitrum).
+3.  ICP Canister verifies the payment via RPC (HTTPS Outcall).
+4.  Access is granted instantly via Smart Contract.
+
+---
+
+## 🛠 Development & Setup
+
+### Prerequisites
+* [Node.js](https://nodejs.org/) (v18+)
+* [DFINITY SDK (dfx)](https://internetcomputer.org/docs/current/developer-docs/setup/install)
+
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/tunahantatli/falcon_dapp.git](https://github.com/tunahantatli/falcon_dapp.git)
+    cd falcon_dapp
+    ```
+
+2.  **Start the local ICP replica:**
+    ```bash
+    dfx start --background
+    ```
+
+3.  **Deploy Canisters:**
+    ```bash
+    dfx deploy
+    ```
+
+4.  **Launch Frontend:**
+    The frontend will be accessible at: `http://localhost:4943?canisterId=[your-frontend-canister-id]`
+
+---
+
+## 🗺 Roadmap
+
+- [x] **Phase 1:** Project Initialization & Architecture Design
+- [ ] **Phase 2:** Skeleton Deployment (Frontend + Basic Canister Structure)
+- [ ] **Phase 3:** TCN Signal Integration (Authenticated Ingress from Worker)
+- [ ] **Phase 4:** HTTPS Outcalls Implementation for EVM Payment Verification
+- [ ] **Phase 5:** Mainnet Launch & Marketing
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
