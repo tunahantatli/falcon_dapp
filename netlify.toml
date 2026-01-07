@@ -1,0 +1,9 @@
+[build]
+  base = "src/falcon_dapp_frontend"
+  command = "npx vite build"
+  publish = "src/falcon_dapp_frontend/dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
