@@ -1,7 +1,7 @@
 [build]
   base = "src/falcon_dapp_frontend"
   command = "npx vite build"
-  publish = "src/falcon_dapp_frontend/dist"
+  publish = "dist"
 
 [[redirects]]
   from = "/*"

@@ -15,7 +15,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import WalletModal from './components/WalletModal';
 import Dashboard from './components/Dashboard';
-import { falcon_dapp_backend } from '../../declarations/falcon_dapp_backend';
+import { getFalconBackend } from './icp/falconBackend';
 
 const LS_WALLET_TYPE = 'falcon.walletType';
 const LS_WALLET_ADDRESS = 'falcon.walletAddress';
@@ -403,10 +403,17 @@ export default function App() {
 	}, []);
 
 	const loginWithBackend = React.useCallback(async (address) => {
-		const resp = await falcon_dapp_backend.login(address);
-		setUserPlan(resp?.plan ?? null);
-		setUserStatus(resp?.status ?? null);
-		setIsAuthenticated(true);
+		try {
+			const backend = await getFalconBackend();
+			const resp = await backend.login(address);
+			setUserPlan(resp?.plan ?? null);
+			setUserStatus(resp?.status ?? null);
+			setIsAuthenticated(true);
+		} catch {
+			setUserPlan(null);
+			setUserStatus('offline');
+			setIsAuthenticated(true);
+		}
 	}, []);
 
 	const connectEvm = React.useCallback(async () => {
