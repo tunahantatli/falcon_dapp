@@ -1,6 +1,5 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ethers } from 'ethers';
 import {
 	ArrowRight,
 	Check,
@@ -13,12 +12,8 @@ import {
 import Container from './components/Container';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import WalletModal from './components/WalletModal';
 import Dashboard from './components/Dashboard';
-import { getFalconBackend } from './icp/falconBackend';
-
-const LS_WALLET_TYPE = 'falcon.walletType';
-const LS_WALLET_ADDRESS = 'falcon.walletAddress';
+import { useWallet } from './wallet/WalletProvider';
 
 function SectionTitle({ eyebrow, title, subtitle }) {
 	return (
@@ -362,190 +357,11 @@ function Pricing() {
 
 
 export default function App() {
-	const [walletAddress, setWalletAddress] = React.useState(null);
-	const [walletType, setWalletType] = React.useState(null); // 'evm' | 'solana' | 'tron'
-	const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-	const [userPlan, setUserPlan] = React.useState(null);
-	const [userStatus, setUserStatus] = React.useState(null);
-
-	const [isConnectOpen, setIsConnectOpen] = React.useState(false);
-	const [connectError, setConnectError] = React.useState(null);
-	const [isConnecting, setIsConnecting] = React.useState(false);
-
-	React.useEffect(() => {
-		try {
-			const storedType = localStorage.getItem(LS_WALLET_TYPE);
-			const storedAddress = localStorage.getItem(LS_WALLET_ADDRESS);
-			if (storedType && storedAddress) {
-				setWalletType(storedType);
-				setWalletAddress(storedAddress);
-				setIsAuthenticated(true);
-			}
-		} catch {
-			// ignore
-		}
-	}, []);
-
-	const disconnect = React.useCallback(() => {
-		setWalletAddress(null);
-		setWalletType(null);
-		setIsAuthenticated(false);
-		setUserPlan(null);
-		setUserStatus(null);
-		setConnectError(null);
-		setIsConnecting(false);
-		try {
-			localStorage.removeItem(LS_WALLET_TYPE);
-			localStorage.removeItem(LS_WALLET_ADDRESS);
-		} catch {
-			// ignore
-		}
-	}, []);
-
-	const loginWithBackend = React.useCallback(async (address) => {
-		try {
-			const backend = await getFalconBackend();
-			const resp = await backend.login(address);
-			setUserPlan(resp?.plan ?? null);
-			setUserStatus(resp?.status ?? null);
-			setIsAuthenticated(true);
-		} catch {
-			setUserPlan(null);
-			setUserStatus('offline');
-			setIsAuthenticated(true);
-		}
-	}, []);
-
-	const connectEvm = React.useCallback(async () => {
-		setConnectError(null);
-		if (typeof window === 'undefined' || !window.ethereum) {
-			setConnectError('MetaMask Wallet not found!');
-			return;
-		}
-
-		setIsConnecting(true);
-		try {
-			const provider = new ethers.BrowserProvider(window.ethereum);
-			await provider.send('eth_requestAccounts', []);
-			const signer = await provider.getSigner();
-			const address = await signer.getAddress();
-
-			setWalletAddress(address);
-			setWalletType('evm');
-			try {
-				localStorage.setItem(LS_WALLET_TYPE, 'evm');
-				localStorage.setItem(LS_WALLET_ADDRESS, address);
-			} catch {
-				// ignore
-			}
-
-			await loginWithBackend(address);
-			setIsConnectOpen(false);
-		} catch (e) {
-			setConnectError(e?.shortMessage || e?.message || 'EVM wallet connection failed.');
-		} finally {
-			setIsConnecting(false);
-		}
-	}, [loginWithBackend]);
-
-	const connectSolana = React.useCallback(async () => {
-		setConnectError(null);
-		const solanaProvider =
-			typeof window !== 'undefined' ? window.phantom?.solana || window.solana : null;
-		if (!solanaProvider || typeof solanaProvider.connect !== 'function') {
-			setConnectError('Phantom Wallet not found!');
-			return;
-		}
-
-		setIsConnecting(true);
-		try {
-			const resp = await solanaProvider.connect();
-			const pubkey = resp?.publicKey?.toString?.() || solanaProvider?.publicKey?.toString?.();
-			if (!pubkey) {
-				setConnectError('Solana wallet connected but address not available.');
-				return;
-			}
-
-			setWalletAddress(pubkey);
-			setWalletType('solana');
-			try {
-				localStorage.setItem(LS_WALLET_TYPE, 'solana');
-				localStorage.setItem(LS_WALLET_ADDRESS, pubkey);
-			} catch {
-				// ignore
-			}
-
-			await loginWithBackend(pubkey);
-			setIsConnectOpen(false);
-		} catch (e) {
-			setConnectError(e?.message || 'Solana wallet connection failed.');
-		} finally {
-			setIsConnecting(false);
-		}
-	}, [loginWithBackend]);
-
-	const connectTron = React.useCallback(async () => {
-		setConnectError(null);
-		if (typeof window === 'undefined' || (!window.tronLink && !window.tronWeb)) {
-			setConnectError('TronLink Wallet not found!');
-			return;
-		}
-
-		const tronRequest = window.tronLink?.request || window.tronWeb?.request;
-		if (!tronRequest) {
-			setConnectError('TronLink Wallet not found!');
-			return;
-		}
-
-		setIsConnecting(true);
-		try {
-			await tronRequest({ method: 'tron_requestAccounts' });
-			const address = window.tronWeb?.defaultAddress?.base58;
-			if (!address) {
-				setConnectError('Tron wallet connected but address not available.');
-				return;
-			}
-
-			setWalletAddress(address);
-			setWalletType('tron');
-			try {
-				localStorage.setItem(LS_WALLET_TYPE, 'tron');
-				localStorage.setItem(LS_WALLET_ADDRESS, address);
-			} catch {
-				// ignore
-			}
-
-			await loginWithBackend(address);
-			setIsConnectOpen(false);
-		} catch (e) {
-			setConnectError(e?.message || 'Tron wallet connection failed.');
-		} finally {
-			setIsConnecting(false);
-		}
-	}, [loginWithBackend]);
+	const { isAuthenticated, userPlan, userStatus, address } = useWallet();
 
 	return (
 		<div className="falcon-bg min-h-screen">
-			<Navbar
-				walletAddress={walletAddress}
-				walletType={walletType}
-				onOpenConnect={() => {
-					setConnectError(null);
-					setIsConnectOpen(true);
-				}}
-				onDisconnect={disconnect}
-			/>
-
-			<WalletModal
-				open={isConnectOpen}
-				onClose={() => {
-					if (!isConnecting) setIsConnectOpen(false);
-				}}
-				onSelectEvm={connectEvm}
-				onSelectSolana={connectSolana}
-				onSelectTron={connectTron}
-				errorMessage={connectError}
-			/>
+			<Navbar />
 
 			<AnimatePresence mode="wait">
 				{isAuthenticated ? (
@@ -556,7 +372,7 @@ export default function App() {
 						exit={{ opacity: 0, y: -8 }}
 						transition={{ duration: 0.18, ease: 'easeOut' }}
 					>
-						<Dashboard plan={userPlan} status={userStatus} walletAddress={walletAddress} />
+						<Dashboard plan={userPlan} status={userStatus} walletAddress={address} />
 					</motion.main>
 				) : (
 					<motion.main
