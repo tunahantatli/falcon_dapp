@@ -1,25 +1,34 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Wallet, Zap, Globe, Link as LinkIcon, X, ArrowRight, Download } from 'lucide-react';
+import { Wallet, Zap, Globe, Link as LinkIcon, X, ArrowRight, Download, Shield } from 'lucide-react';
 import { useWallet } from '../wallet/WalletProvider';
 
-function OptionCard({ title, subtitle, Icon, onClick, disabled, notInstalled }) {
+function OptionCard({ title, subtitle, Icon, onClick, disabled, notInstalled, recommended }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`group w-full rounded-3xl border border-white/10 bg-white/5 p-5 text-left backdrop-blur-md transition hover:border-purple-400/25 hover:bg-white/10 ${
+      className={`group w-full rounded-3xl border ${
+        recommended 
+          ? 'border-purple-400/30 bg-purple-500/10' 
+          : 'border-white/10 bg-white/5'
+      } p-5 text-left backdrop-blur-md transition hover:border-purple-400/25 hover:bg-white/10 ${
         disabled ? 'cursor-not-allowed opacity-50' : ''
       }`}
     >
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
-            <Icon className="h-6 w-6 text-purple-200" />
+          <div className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl border ${
+            recommended ? 'border-purple-400/30 bg-purple-500/15' : 'border-white/10 bg-white/5'
+          }`}>
+            <Icon className={`h-6 w-6 ${
+              recommended ? 'text-purple-300' : 'text-purple-200'
+            }`} />
           </div>
           <div>
             <div className="text-base font-semibold text-white flex items-center gap-2">
               {title}
+              {recommended && <span className="text-[10px] bg-purple-500/30 text-purple-300 px-2 py-0.5 rounded-full">Recommended</span>}
               {notInstalled && <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full">Missing</span>}
             </div>
             <div className="mt-1 text-sm text-gray-400">
@@ -39,8 +48,8 @@ function OptionCard({ title, subtitle, Icon, onClick, disabled, notInstalled }) 
 
 export default function WalletModal({ open, onClose }) {
   const {
-    connectMetaMask, connectPhantom, connectTronLink,
-    isMetaMaskAvailable, isPhantomAvailable, isTronLinkAvailable,
+    connectMetaMask, connectPhantom, connectTronLink, connectII,
+    isMetaMaskAvailable, isPhantomAvailable, isTronLinkAvailable, isIIAvailable,
     error, status, isAuthenticated
   } = useWallet();
 
@@ -88,6 +97,14 @@ export default function WalletModal({ open, onClose }) {
               )}
 
               <div className="grid gap-3">
+                <OptionCard
+                  title="Falcon ID"
+                  subtitle="Login with FaceID, TouchID or PIN"
+                  Icon={Shield}
+                  onClick={connectII}
+                  recommended={true}
+                  disabled={status === 'connecting'}
+                />
                 <OptionCard
                   title="MetaMask"
                   subtitle="Ethereum, BSC, Polygon"

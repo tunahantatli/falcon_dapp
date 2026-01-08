@@ -1,8 +1,10 @@
 import React from 'react';
-import { BrowserProvider } from 'ethers';
+import { AuthClient } from '@dfinity/auth-client';
 import { falcon_dapp_backend } from '../../../declarations/falcon_dapp_backend';
 
 const WalletContext = React.createContext(null);
+
+let authClientInstance = null;
 
 const LS_WALLET_TYPE = 'falcon_wallet_type';
 const LS_WALLET_ADDRESS = 'falcon_wallet_address';
@@ -32,6 +34,15 @@ export default function WalletProvider({ children }) {
   const isMetaMaskAvailable = typeof window !== 'undefined' && !!window.ethereum;
   const isPhantomAvailable = typeof window !== 'undefined' && !!window.solana?.isPhantom;
   const isTronLinkAvailable = typeof window !== 'undefined' && !!(window.tronLink || window.tronWeb);
+  const isIIAvailable = true; // Internet Identity always available (no extension needed)
+
+  // AuthClient instance
+  const getAuthClient = React.useCallback(async () => {
+    if (!authClientInstance) {
+      authClientInstance = await AuthClient.create();
+    }
+    return authClientInstance;
+  }, []);
 
   // Backend login - non-blocking
   const loginWithBackend = React.useCallback((address) => {
@@ -51,21 +62,42 @@ export default function WalletProvider({ children }) {
       });
   }, []);
 
-  // LocalStorage'dan restore
+  // LocalStorage'dan restore + II session check
   React.useEffect(() => {
-    try {
-      const storedType = localStorage.getItem(LS_WALLET_TYPE);
-      const storedAddress = localStorage.getItem(LS_WALLET_ADDRESS);
-      if (storedType && storedAddress) {
-        setWalletType(storedType);
-        setAddress(storedAddress);
-        setStatus('connected');
-        setIsAuthenticated(true);
+    const initSession = async () => {
+      try {
+        const storedType = localStorage.getItem(LS_WALLET_TYPE);
+        const storedAddress = localStorage.getItem(LS_WALLET_ADDRESS);
+        
+        // II session kontrolü
+        if (storedType === 'ii') {
+          const client = await getAuthClient();
+          const isAuth = await client.isAuthenticated();
+          if (isAuth) {
+            const identity = client.getIdentity();
+            const principal = identity.getPrincipal().toString();
+            setWalletType('ii');
+            setAddress(principal);
+            setStatus('connected');
+            setIsAuthenticated(true);
+            return;
+          }
+        }
+        
+        // Diğer wallet'lar için normal restore
+        if (storedType && storedAddress && storedType !== 'ii') {
+          setWalletType(storedType);
+          setAddress(storedAddress);
+          setStatus('connected');
+          setIsAuthenticated(true);
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
-  }, []);
+    };
+    
+    initSession();
+  }, [getAuthClient]);
 
   const reset = React.useCallback(() => {
     setStatus('disconnected');
@@ -190,19 +222,66 @@ export default function WalletProvider({ children }) {
     }
   }, [isTronLinkAvailable, loginWithBackend]);
 
-  const disconnect = React.useCallback(() => {
+  // --- INTERNET IDENTITY ---
+  const connectII = React.useCallback(async () => {
+    setError(null);
+    try {
+      setStatus('connecting');
+      
+      const client = await getAuthClient();
+      
+      // Local development için production II kullan (local II canister yok)
+      const identityProvider = 'https://identity.ic0.app';
+      
+      await client.login({
+        identityProvider,
+        maxTimeToLive: BigInt(7 * 24 * 60 * 60 * 1000 * 1000 * 1000), // 7 days
+        onSuccess: async () => {
+          const identity = client.getIdentity();
+          const principal = identity.getPrincipal().toString();
+          
+          setAddress(principal);
+          setWalletType('ii');
+          setChainId('icp');
+          setStatus('connected');
+          
+          // LocalStorage'a kaydet
+          try {
+            localStorage.setItem(LS_WALLET_TYPE, 'ii');
+            localStorage.setItem(LS_WALLET_ADDRESS, principal);
+          } catch {}
+          
+          // Backend login - non-blocking
+          loginWithBackend(principal);
+        },
+        onError: (error) => {
+          setStatus('error');
+          setError(error?.message || 'Internet Identity login failed.');
+        },
+      });
+    } catch (e) {
+      setStatus('error');
+      setError(e.message || 'Internet Identity connection failed.');
+    }
+  }, [getAuthClient, loginWithBackend]);
+
+  const disconnect = React.useCallback(async () => {
     if (walletType === 'phantom' && window.solana?.disconnect) {
       window.solana.disconnect();
     }
+    if (walletType === 'ii') {
+      const client = await getAuthClient();
+      await client.logout();
+    }
     reset();
-  }, [reset, walletType]);
+  }, [reset, walletType, getAuthClient]);
 
   const value = React.useMemo(() => ({
     status, address, walletType, shortAddress: formatAddress(address),
-    chainId, error, isMetaMaskAvailable, isPhantomAvailable, isTronLinkAvailable,
+    chainId, error, isMetaMaskAvailable, isPhantomAvailable, isTronLinkAvailable, isIIAvailable,
     isAuthenticated, userPlan, userStatus,
-    connectMetaMask, connectPhantom, connectTronLink, disconnect, reset
-  }), [status, address, walletType, chainId, error, isMetaMaskAvailable, isPhantomAvailable, isTronLinkAvailable, isAuthenticated, userPlan, userStatus, connectMetaMask, connectPhantom, connectTronLink, disconnect, reset]);
+    connectMetaMask, connectPhantom, connectTronLink, connectII, disconnect, reset
+  }), [status, address, walletType, chainId, error, isMetaMaskAvailable, isPhantomAvailable, isTronLinkAvailable, isIIAvailable, isAuthenticated, userPlan, userStatus, connectMetaMask, connectPhantom, connectTronLink, connectII, disconnect, reset]);
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
 }

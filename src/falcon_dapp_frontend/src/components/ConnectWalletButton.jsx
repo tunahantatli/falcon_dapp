@@ -1,10 +1,17 @@
 import React from 'react';
-import { Wallet, Zap, X } from 'lucide-react';
+import { Wallet, Zap, X, Shield } from 'lucide-react';
 import { useWallet } from '../wallet/WalletProvider';
 import WalletModal from './WalletModal';
 
 // Wallet icons/colors by type
 const WALLET_CONFIG = {
+  ii: {
+    label: 'Falcon ID',
+    icon: Shield,
+    color: 'text-purple-300',
+    bgColor: 'bg-purple-500/10',
+    borderColor: 'border-purple-400/30',
+  },
   metamask: {
     label: 'MetaMask',
     icon: Zap,

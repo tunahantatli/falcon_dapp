@@ -105,7 +105,7 @@ Falcon Dapp operates on a straightforward subscription model:
 - [ ] **Phase 2:** Skeleton Deployment (Frontend + Basic Canister Structure)
 - [ ] **Phase 3:** TCN Signal Integration (Authenticated Ingress from Worker)
 - [ ] **Phase 4:** HTTPS Outcalls Implementation for EVM Payment Verification
-- [ ] **Phase 5:** Training the AI model for 50+ altcoins and publishing backtests
+- [ ] **Phase 5:** Training the AI model for 10+ altcoins and publishing backtests
 - [ ] **Phase 6:** Mainnet launch & marketing
 - [ ] **Phase 7:** One-click DEX swap integration (EVM & Solana)
 - [ ] **Phase 8:** Global fiat gateway launch & Falcon debit card vision
