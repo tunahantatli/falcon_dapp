@@ -1,55 +1,11 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Wallet, Zap, Globe, Link as LinkIcon, X, ArrowRight, Download, Shield } from 'lucide-react';
+import { X, Shield } from 'lucide-react';
 import { useWallet } from '../wallet/WalletProvider';
-
-function OptionCard({ title, subtitle, Icon, onClick, disabled, notInstalled, recommended }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`group w-full rounded-3xl border ${
-        recommended 
-          ? 'border-purple-400/30 bg-purple-500/10' 
-          : 'border-white/10 bg-white/5'
-      } p-5 text-left backdrop-blur-md transition hover:border-purple-400/25 hover:bg-white/10 ${
-        disabled ? 'cursor-not-allowed opacity-50' : ''
-      }`}
-    >
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl border ${
-            recommended ? 'border-purple-400/30 bg-purple-500/15' : 'border-white/10 bg-white/5'
-          }`}>
-            <Icon className={`h-6 w-6 ${
-              recommended ? 'text-purple-300' : 'text-purple-200'
-            }`} />
-          </div>
-          <div>
-            <div className="text-base font-semibold text-white flex items-center gap-2">
-              {title}
-              {recommended && <span className="text-[10px] bg-purple-500/30 text-purple-300 px-2 py-0.5 rounded-full">Recommended</span>}
-              {notInstalled && <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full">Missing</span>}
-            </div>
-            <div className="mt-1 text-sm text-gray-400">
-              {notInstalled ? 'Click to install extension' : subtitle}
-            </div>
-          </div>
-        </div>
-        {notInstalled ? (
-          <Download className="h-5 w-5 text-orange-400 opacity-70" />
-        ) : (
-          <ArrowRight className="h-5 w-5 text-white/50 transition group-hover:translate-x-1 group-hover:text-white" />
-        )}
-      </div>
-    </button>
-  );
-}
 
 export default function WalletModal({ open, onClose }) {
   const {
-    connectMetaMask, connectPhantom, connectTronLink, connectII,
-    isMetaMaskAvailable, isPhantomAvailable, isTronLinkAvailable, isIIAvailable,
+    connectII,
     error, status, isAuthenticated
   } = useWallet();
 
@@ -83,7 +39,7 @@ export default function WalletModal({ open, onClose }) {
             <div className="relative w-full rounded-3xl border border-white/10 bg-[#0f0f0f] p-6 shadow-2xl backdrop-blur-xl">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Wallet className="text-purple-400" /> Connect Wallet
+                  <Shield className="text-purple-400" /> Connect Falcon Wallet
                 </h3>
                 <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition">
                   <X className="text-gray-400" />
@@ -96,40 +52,33 @@ export default function WalletModal({ open, onClose }) {
                 </div>
               )}
 
-              <div className="grid gap-3">
-                <OptionCard
-                  title="Falcon ID"
-                  subtitle="Login with FaceID, TouchID or PIN"
-                  Icon={Shield}
-                  onClick={connectII}
-                  recommended={true}
-                  disabled={status === 'connecting'}
-                />
-                <OptionCard
-                  title="MetaMask"
-                  subtitle="Ethereum, BSC, Polygon"
-                  Icon={Zap}
-                  onClick={connectMetaMask}
-                  notInstalled={!isMetaMaskAvailable}
-                  disabled={status === 'connecting'}
-                />
-                <OptionCard
-                  title="Phantom"
-                  subtitle="Solana Network"
-                  Icon={Globe}
-                  onClick={connectPhantom}
-                  notInstalled={!isPhantomAvailable}
-                  disabled={status === 'connecting'}
-                />
-                <OptionCard
-                  title="TronLink"
-                  subtitle="Tron Network"
-                  Icon={LinkIcon}
-                  onClick={connectTronLink}
-                  notInstalled={!isTronLinkAvailable}
-                  disabled={status === 'connecting'}
-                />
-              </div>
+              <button
+                type="button"
+                onClick={connectII}
+                disabled={status === 'connecting'}
+                className="group w-full rounded-3xl border border-purple-400/30 bg-purple-500/10 p-6 text-left backdrop-blur-md transition hover:border-purple-400/50 hover:bg-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-purple-400/30 bg-purple-500/15">
+                    <Shield className="h-8 w-8 text-purple-300" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-lg font-bold text-white mb-1">
+                      Falcon Wallet
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      Powered by Internet Identity
+                    </div>
+                    <div className="mt-2 text-xs text-purple-300">
+                      Secure • No Extensions • Web3-Native
+                    </div>
+                  </div>
+                </div>
+              </button>
+              
+              <p className="mt-4 text-center text-xs text-gray-500">
+                Your ICP-native wallet • FaceID, TouchID or PIN authentication
+              </p>
             </div>
           </motion.div>
         </motion.div>

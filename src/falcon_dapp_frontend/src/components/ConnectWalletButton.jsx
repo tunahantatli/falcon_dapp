@@ -1,68 +1,62 @@
 import React from 'react';
-import { Wallet, Zap, X, Shield } from 'lucide-react';
+import { X, Shield, Wallet } from 'lucide-react';
 import { useWallet } from '../wallet/WalletProvider';
 import WalletModal from './WalletModal';
+import WalletDetailsModal from './WalletDetailsModal';
 
-// Wallet icons/colors by type
+// Wallet config for Falcon Wallet
 const WALLET_CONFIG = {
   ii: {
-    label: 'Falcon ID',
+    label: 'Falcon Wallet',
     icon: Shield,
     color: 'text-purple-300',
     bgColor: 'bg-purple-500/10',
     borderColor: 'border-purple-400/30',
   },
-  metamask: {
-    label: 'MetaMask',
-    icon: Zap,
-    color: 'text-orange-300',
-    bgColor: 'bg-orange-500/10',
-    borderColor: 'border-orange-400/30',
-  },
-  phantom: {
-    label: 'Phantom',
-    icon: Wallet,
-    color: 'text-purple-300',
-    bgColor: 'bg-purple-500/10',
-    borderColor: 'border-purple-400/30',
-  },
-  tron: {
-    label: 'TronLink',
-    icon: Zap,
-    color: 'text-red-300',
-    bgColor: 'bg-red-500/10',
-    borderColor: 'border-red-400/30',
-  },
 };
 
-export default function ConnectWalletButton() {
-  const { status, shortAddress, walletType, disconnect } = useWallet();
+export default function ConnectWalletButton({ onOpenWallet }) {
+  const { status, shortAddress, address, walletType, disconnect } = useWallet();
   const [modalOpen, setModalOpen] = React.useState(false);
+  const [walletDetailsOpen, setWalletDetailsOpen] = React.useState(false);
 
   const isConnected = status === 'connected';
   const config = walletType ? WALLET_CONFIG[walletType] : null;
-  const Icon = config?.icon || Wallet;
+  const Icon = config?.icon || Shield;
 
   if (isConnected && config) {
     return (
-      <div className="group relative inline-flex items-center gap-2">
-        <div
-          className={`inline-flex items-center gap-2 rounded-xl border ${config.borderColor} ${config.bgColor} px-4 py-2 backdrop-blur-md`}
-        >
-          <Icon className={`h-4 w-4 ${config.color}`} />
-          <span className="text-sm font-semibold text-white">{shortAddress}</span>
-          <span className="text-xs text-white/50">({config.label})</span>
+      <>
+        <div className="group relative inline-flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setWalletDetailsOpen(true)}
+            className={`inline-flex items-center gap-2 rounded-xl border ${config.borderColor} ${config.bgColor} px-4 py-2 backdrop-blur-md transition hover:border-purple-400/50 hover:bg-purple-500/20 cursor-pointer`}
+          >
+            <Icon className={`h-4 w-4 ${config.color}`} />
+            <span className="text-sm font-semibold text-white">{shortAddress}</span>
+            <span className="text-xs text-white/50">({config.label})</span>
+          </button>
+          
+          <button
+            type="button"
+            onClick={disconnect}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 backdrop-blur-md transition hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-300"
+            aria-label="Disconnect Wallet"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
-        
-        <button
-          type="button"
-          onClick={disconnect}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/70 backdrop-blur-md transition hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-300"
-          aria-label="Disconnect Wallet"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
+
+        <WalletDetailsModal
+          open={walletDetailsOpen}
+          onClose={() => setWalletDetailsOpen(false)}
+          address={address}
+          onExpand={() => {
+            if (onOpenWallet) onOpenWallet();
+          }}
+        />
+      </>
     );
   }
 

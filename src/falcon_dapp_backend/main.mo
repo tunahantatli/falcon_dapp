@@ -15,6 +15,20 @@ persistent actor FalconBackend {
     lastLoginAt : Int;
   };
 
+  type TokenBalance = {
+    symbol : Text;
+    amount : Float;
+    valueUSD : Float;
+  };
+
+  type WalletInfo = {
+    address : Text;
+    balanceICP : Float;
+    balanceUSD : Float;
+    tokens : [TokenBalance];
+    transactionCount : Nat;
+  };
+
   stable var userEntries : [(Text, UserInfo)] = [];
   transient var users = HashMap.HashMap<Text, UserInfo>(0, Text.equal, Text.hash);
 
@@ -68,5 +82,24 @@ persistent actor FalconBackend {
 
   public query func getUserCount() : async Nat {
     return users.size();
+  };
+
+  // Wallet fonksiyonları
+  public query func getWalletInfo(address : Text) : async WalletInfo {
+    // Şimdilik boş wallet bilgisi döndür
+    // İleride gerçek balance ve token bilgilerini ICP ledger'dan çekeceğiz
+    return {
+      address = address;
+      balanceICP = 0.0;
+      balanceUSD = 0.0;
+      tokens = [];
+      transactionCount = 0;
+    };
+  };
+
+  public query func getTokenBalances(address : Text) : async [TokenBalance] {
+    // Şimdilik boş array döndür
+    // İleride gerçek token balance'larını döndüreceğiz
+    return [];
   };
 };

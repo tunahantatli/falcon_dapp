@@ -32,15 +32,20 @@ Falcon Dapp consists of three main pillars:
 
 ### 1. The Frontend (Asset Canister)
 * **Tech:** React.js, Tailwind CSS, Motoko.
-* **Function:** Wallet connection (MetaMask/Rabby), Dashboard visualization (Standard vs. Pro views), and Payment initiation.
+* **Function:** 
+  - Falcon Wallet authentication (ICP-native wallet powered by Internet Identity)
+  - Interactive wallet modal and full wallet page
+  - Dashboard visualization with real-time TCN scores
+  - Token balance and transaction history (coming soon)
 * **Hosting:** Fully decentralized on ICP Asset Canister.
 
 ### 2. The Backend (Membership & Signal Canisters)
 * **Tech:** Motoko / Rust.
-* **Key Feature - Trustless Payment Verification:**
-    * Uses **HTTPS Outcalls** to query EVM RPC nodes directly.
-    * Verifies transaction hashes (`TxHash`) to confirm 15 USDT subscription payments.
-    * Manages user access (Standard/Pro) and expiration (30-day logic).
+* **Key Features:**
+    * User authentication and session management
+    * Wallet information storage (address, balance, tokens)
+    * TCN signal data management
+    * Query functions for wallet details and user info
 
 ### 3. The AI Engine (Off-Chain Worker)
 * **Tech:** Python, PyTorch (TCN Model).
@@ -63,10 +68,10 @@ Falcon Dapp operates on a straightforward subscription model:
 * **Pro Plan (15.00 USDT):** Detailed Analytics + News/Whale Scores.
 
 **User Flow:**
-1.  Connect EVM Wallet to the dApp.
-2.  Sign a transaction to pay subscription fee (on BSC/Arbitrum).
-3.  ICP Canister verifies the payment via RPC (HTTPS Outcall).
-4.  Access is granted instantly via Smart Contract.
+1.  Connect with Falcon Wallet (ICP-native wallet using Internet Identity).
+2.  Full access to Pro features instantly - no subscription required.
+3.  Optional: Pay for advanced features via ICP tokens.
+4.  Trade directly from dashboard with integrated DEX links.
 
 ---
 

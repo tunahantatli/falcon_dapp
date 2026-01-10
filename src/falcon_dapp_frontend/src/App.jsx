@@ -13,6 +13,7 @@ import Container from './components/Container';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Dashboard from './components/Dashboard';
+import WalletPage from './components/WalletPage';
 import { useWallet } from './wallet/WalletProvider';
 
 function SectionTitle({ eyebrow, title, subtitle }) {
@@ -358,21 +359,34 @@ function Pricing() {
 
 export default function App() {
 	const { isAuthenticated, userPlan, userStatus, address } = useWallet();
+	const [currentPage, setCurrentPage] = React.useState('dashboard'); // 'dashboard' | 'wallet'
 
 	return (
 		<div className="falcon-bg min-h-screen">
-			<Navbar />
+			<Navbar onOpenWallet={() => setCurrentPage('wallet')} />
 
 			<AnimatePresence mode="wait">
 				{isAuthenticated ? (
 					<motion.main
-						key="dashboard"
+						key={currentPage}
 						initial={{ opacity: 0, y: 8 }}
 						animate={{ opacity: 1, y: 0 }}
 						exit={{ opacity: 0, y: -8 }}
 						transition={{ duration: 0.18, ease: 'easeOut' }}
 					>
-						<Dashboard plan={userPlan} status={userStatus} walletAddress={address} />
+						{currentPage === 'wallet' ? (
+							<WalletPage 
+								address={address} 
+								onBack={() => setCurrentPage('dashboard')} 
+							/>
+						) : (
+							<Dashboard 
+								plan={userPlan} 
+								userPlan={userPlan} 
+								status={userStatus} 
+								walletType="ii" 
+							/>
+						)}
 					</motion.main>
 				) : (
 					<motion.main

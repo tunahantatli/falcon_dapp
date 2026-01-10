@@ -2,7 +2,7 @@ import React from 'react';
 import Container from './Container';
 import ConnectWalletButton from './ConnectWalletButton';
 
-export default function Navbar() {
+export default function Navbar({ onOpenWallet }) {
   return (
     <div className="fixed inset-x-0 top-0 z-50">
       <div className="border-b border-white/10 bg-[#0a0a0a]/60 backdrop-blur-md">
@@ -28,7 +28,7 @@ export default function Navbar() {
             </nav>
 
             <div className="flex items-center gap-3">
-              <ConnectWalletButton />
+              <ConnectWalletButton onOpenWallet={onOpenWallet} />
             </div>
           </div>
         </Container>

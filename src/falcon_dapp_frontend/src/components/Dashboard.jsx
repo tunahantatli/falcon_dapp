@@ -177,7 +177,7 @@ function CategorySection({ title, tokens, walletType }) {
 }
 
 export default function Dashboard({ plan, userPlan, status = 'Active', walletType }) {
-  const effectivePlan = plan ?? userPlan ?? 'Standard';
+  const effectivePlan = plan ?? userPlan ?? 'Pro'; // Herkes Pro üye
   const [lastUpdatedAt] = React.useState(() => Date.now());
   const [tick, setTick] = React.useState(0);
 
