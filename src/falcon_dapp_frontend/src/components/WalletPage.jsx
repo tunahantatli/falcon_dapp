@@ -100,10 +100,34 @@ export default function WalletPage({ address, onBack }) {
     }
   );
 
-  // Fetch real-time prices from CoinGecko
-  const { data: prices = {} } = useSWR(
+  // Fetch real-time prices from backend (with CoinGecko fallback)
+  const { data: prices = {}, isLoading: pricesLoading } = useSWR(
     'token-prices',
-    () => fetchTokenPrices(['icp', 'ckbtc', 'cketh', 'ckusdt']),
+    async () => {
+      try {
+        // 🚀 Try backend price cache first
+        const backendPrices = await falcon_dapp_backend.getTokenPrices();
+        
+        if (backendPrices && backendPrices.length > 0) {
+          // Transform backend format to frontend format
+          const priceMap = {};
+          backendPrices.forEach(price => {
+            const symbol = price.symbol.toLowerCase();
+            priceMap[symbol] = {
+              usd: Number(price.priceInUsd),
+              usd_24h_change: 0, // Backend doesn't track 24h change yet
+            };
+          });
+          return priceMap;
+        }
+        
+        // Fallback to CoinGecko if backend cache is empty
+        return await fetchTokenPrices(['icp', 'ckbtc', 'cketh', 'ckusdt']);
+      } catch (error) {
+        console.error('Error fetching prices from backend, falling back to CoinGecko:', error);
+        return await fetchTokenPrices(['icp', 'ckbtc', 'cketh', 'ckusdt']);
+      }
+    },
     {
       refreshInterval: 60000, // Update every 1 minute
       revalidateOnFocus: true,
@@ -368,7 +392,11 @@ export default function WalletPage({ address, onBack }) {
                   transition={{ duration: 0.5 }}
                   className="text-purple-300/70 text-lg"
                 >
-                  ≈ ${totalBalanceUSD.toFixed(2)} USD
+                  {pricesLoading ? (
+                    <div className="inline-block h-6 w-32 bg-purple-500/20 rounded animate-pulse" />
+                  ) : (
+                    `≈ ${totalBalanceUSD.toFixed(2)} USD`
+                  )}
                 </motion.div>
               </div>
             </div>
@@ -604,47 +632,76 @@ export default function WalletPage({ address, onBack }) {
                   View All
                 </button>
               </div>
-              {recentTxs.length === 0 ? (
+              {!recentTxs ? (
+                // Skeleton Loader
+                <div className="relative space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-purple-950/30 border border-purple-500/10 animate-pulse">
+                      <div className="w-7 h-7 rounded-lg bg-purple-500/20" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 bg-purple-500/20 rounded w-20" />
+                        <div className="h-2 bg-purple-500/10 rounded w-16" />
+                      </div>
+                      <div className="h-3 bg-purple-500/20 rounded w-12" />
+                    </div>
+                  ))}
+                </div>
+              ) : recentTxs.length === 0 ? (
                 <div className="relative text-center py-8">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-purple-950/50 border border-purple-500/30 mb-3 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
                     <Clock className="h-7 w-7 text-purple-400/60" />
                   </div>
-                  <div className="text-purple-300/70 text-sm">
+                  <div className="text-purple-300/70 text-sm font-medium mb-1">
                     No recent activity
+                  </div>
+                  <div className="text-purple-400/50 text-xs">
+                    Your transactions will appear here
                   </div>
                 </div>
               ) : (
                 <div className="relative space-y-3">
-                  {recentTxs.slice(0, 5).map((tx, index) => (
-                    <motion.div
-                      key={`${tx.tokenId}-${tx.id}-${index}`}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-purple-950/30 border border-purple-500/10 hover:border-purple-500/20 transition-all group cursor-pointer"
-                      onClick={() => setTransactionHistoryModal(true)}
-                    >
-                      <div className={`p-2 rounded-lg ${tx.type === 'send' ? 'bg-red-500/20' : 'bg-green-500/20'}`}>
-                        {tx.type === 'send' ? (
-                          <ArrowUpRight className="w-3 h-3 text-red-400" />
-                        ) : (
-                          <ArrowDownLeft className="w-3 h-3 text-green-400" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-purple-100 capitalize">
-                          {tx.type} {tx.tokenSymbol}
+                  {recentTxs.slice(0, 5).map((tx, index) => {
+                    const isSend = tx.type === 'send' || tx.type === 'Send';
+                    const isReceive = tx.type === 'receive' || tx.type === 'Receive';
+                    const txDate = new Date(tx.timestamp);
+                    const formattedDate = txDate.toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    });
+                    
+                    return (
+                      <motion.div
+                        key={`${tx.id}-${index}`}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-purple-950/30 border border-purple-500/10 hover:border-purple-500/20 hover:bg-purple-950/40 transition-all group cursor-pointer"
+                        onClick={() => setTransactionHistoryModal(true)}
+                      >
+                        <div className={`p-2 rounded-lg ${isSend ? 'bg-red-500/20 group-hover:bg-red-500/30' : 'bg-green-500/20 group-hover:bg-green-500/30'} transition-colors`}>
+                          {isSend ? (
+                            <ArrowUpRight className="w-3.5 h-3.5 text-red-400" />
+                          ) : (
+                            <ArrowDownLeft className="w-3.5 h-3.5 text-green-400" />
+                          )}
                         </div>
-                        <div className="text-xs text-gray-500 truncate">
-                          {new Date(tx.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-semibold text-purple-100">
+                            {isSend ? 'Sent' : 'Received'} {tx.tokenSymbol}
+                          </div>
+                          <div className="text-xs text-purple-400/60 truncate">
+                            {formattedDate}
+                          </div>
                         </div>
-                      </div>
-                      <div className={`text-xs font-medium ${tx.type === 'send' ? 'text-red-400' : 'text-green-400'}`}>
-                        {tx.type === 'send' ? '-' : '+'}
-                        {formatTokenAmount(tx.amount, tx.tokenDecimals)}
-                      </div>
-                    </motion.div>
-                  ))}
+                        <div className={`text-xs font-semibold tabular-nums ${isSend ? 'text-red-400' : 'text-green-400'}`}>
+                          {isSend ? '- ' : '+ '}
+                          {formatTokenAmount(tx.amount, tx.tokenDecimals)} {tx.tokenSymbol}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               )}
             </div>
