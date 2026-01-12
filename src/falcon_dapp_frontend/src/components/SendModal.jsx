@@ -18,7 +18,7 @@ const SendModal = ({ isOpen, onClose, token, userPrincipal }) => {
     }
   }, [isOpen, token, userPrincipal]);
 
-  const handleSend = async () => {
+const handleSend = async () => {
     setError('');
     
     // Validation
@@ -44,7 +44,7 @@ const SendModal = ({ isOpen, onClose, token, userPrincipal }) => {
 
       setLoading(true);
 
-      // Perform transfer
+      // 1. Perform transfer (Blockchain Action)
       const result = await transferToken(
         token.canisterId,
         recipient.trim(),
@@ -53,6 +53,30 @@ const SendModal = ({ isOpen, onClose, token, userPrincipal }) => {
       );
 
       if (result.success) {
+        
+        // 🔥 MISSING LINK: Log to Falcon Backend 🔥
+        try {
+            // result nesnesinden işlem ID'sini (Block Index) almaya çalışıyoruz
+            const txId = result.txIndex ? result.txIndex.toString() : Date.now().toString();
+
+            await falcon_dapp_backend.addTransaction(
+                userPrincipal.toText(), // Owner (Caller Check'ten geçecek)
+                txId,                   // Transaction ID
+                userPrincipal.toText(), // From
+                recipient.trim(),       // To
+                parseFloat(amount),     // Amount (Float olarak)
+                token.symbol,           // Token Symbol (ICP, ckBTC etc.)
+                "send"                  // Type
+            );
+            
+            // Eğer SWR kullanıyorsan listeyi hemen güncellemek için:
+            // mutate('userTransactions'); 
+            
+        } catch (logError) {
+            console.error("Transaction successful but failed to log to backend:", logError);
+            // Kritik değil, kullanıcı parayı gönderdi, hata gösterme.
+        }
+
         setSuccess(true);
         setTimeout(() => {
           handleClose();
@@ -66,7 +90,7 @@ const SendModal = ({ isOpen, onClose, token, userPrincipal }) => {
       setLoading(false);
     }
   };
-
+  
   const handleClose = () => {
     setRecipient('');
     setAmount('');
