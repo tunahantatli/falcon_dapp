@@ -1,5 +1,6 @@
 import Debug "mo:base/Debug";
 import HashMap "mo:base/HashMap";
+import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Int "mo:base/Int";
@@ -582,6 +583,13 @@ persistent actor FalconBackend {
     tokenSymbol : Text,
     txType : Text
   ) : async Bool {
+    // 🔒 Authorization Check: Only the owner can add transactions to their history
+    let caller = Principal.toText(_msg.caller);
+    if (caller != userAddress) {
+      Debug.print("⛔ Unauthorized transaction attempt by: " # caller # " for address: " # userAddress);
+      return false;
+    };
+    
     let now = Time.now();
     
     let newTx : Transaction = {
