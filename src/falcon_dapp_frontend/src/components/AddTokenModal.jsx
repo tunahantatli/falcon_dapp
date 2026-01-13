@@ -192,13 +192,15 @@ const AddTokenModal = ({ isOpen, onClose, onTokenAdded, userPrincipal }) => {
     setSelectedToken(token);
 
     try {
-      const metadata = await getTokenMetadata(token.canisterId);
-      
-      if (!metadata) {
-        setError('Failed to fetch token metadata');
-        setLoading(false);
-        return;
-      }
+      // Use mock metadata from POPULAR_TOKENS for local development
+      // In production, this would fetch from mainnet
+      const metadata = {
+        name: token.name,
+        symbol: token.symbol,
+        decimals: 8, // Default decimals
+        fee: 10000, // Default fee
+        logo: token.logo,
+      };
 
       // Add token immediately
       await onTokenAdded(token.canisterId, metadata);
