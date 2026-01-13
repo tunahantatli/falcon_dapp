@@ -29,9 +29,24 @@ const TOKEN_CATEGORIES = {
 };
 
 const DEX_CONFIG = {
-  bsc: { name: 'PancakeSwap', url: 'https://pancakeswap.finance/swap', theme: 'border-yellow-400/30 bg-yellow-500/10 text-yellow-200 hover:border-yellow-400/50 hover:bg-yellow-500/20' },
-  evm: { name: 'Uniswap', url: 'https://app.uniswap.org', theme: 'border-pink-400/30 bg-pink-500/10 text-pink-200 hover:border-pink-400/50 hover:bg-pink-500/20' },
-  solana: { name: 'Jupiter', url: 'https://jup.ag', theme: 'border-orange-400/30 bg-orange-500/10 text-orange-200 hover:border-orange-400/50 hover:bg-orange-500/20' },
+  bsc: { 
+    name: 'PancakeSwap', 
+    url: 'https://pancakeswap.finance/swap', 
+    limitUrl: 'https://pancakeswap.finance/limit-orders',
+    theme: 'border-yellow-400/30 bg-yellow-500/10 text-yellow-200 hover:border-yellow-400/50 hover:bg-yellow-500/20' 
+  },
+  evm: { 
+    name: 'Uniswap', 
+    url: 'https://app.uniswap.org', 
+    limitUrl: 'https://app.uniswap.org/#/limit',
+    theme: 'border-pink-400/30 bg-pink-500/10 text-pink-200 hover:border-pink-400/50 hover:bg-pink-500/20' 
+  },
+  solana: { 
+    name: 'Jupiter', 
+    url: 'https://jup.ag', 
+    limitUrl: 'https://jup.ag/limit',
+    theme: 'border-orange-400/30 bg-orange-500/10 text-orange-200 hover:border-orange-400/50 hover:bg-orange-500/20' 
+  },
 };
 
 function scoreClass(score) {
@@ -72,14 +87,27 @@ function TradeButton({ walletType, tokenChain }) {
     window.open(dexConfig.url, '_blank', 'noopener,noreferrer');
   };
 
+  const handleLimitOrder = () => {
+    window.open(dexConfig.limitUrl, '_blank', 'noopener,noreferrer');
+  };
+
   return (
-    <button
-      onClick={handleTrade}
-      className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${dexConfig.theme}`}
-    >
-      Trade on {dexConfig.name}
-      <ExternalLink className="h-3 w-3" />
-    </button>
+    <div className="flex items-center gap-2">
+      <button
+        onClick={handleTrade}
+        className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${dexConfig.theme}`}
+      >
+        Trade on {dexConfig.name}
+        <ExternalLink className="h-3 w-3" />
+      </button>
+      <button
+        onClick={handleLimitOrder}
+        className="inline-flex items-center gap-2 rounded-lg border border-purple-400/30 bg-purple-500/10 px-3 py-1.5 text-xs font-semibold text-purple-200 transition hover:border-purple-400/50 hover:bg-purple-500/20"
+      >
+        <Target className="h-3.5 w-3.5" />
+        Limit Order
+      </button>
+    </div>
   );
 }
 

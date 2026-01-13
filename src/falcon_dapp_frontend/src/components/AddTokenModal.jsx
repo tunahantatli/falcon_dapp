@@ -59,7 +59,7 @@ const POPULAR_TOKENS = [
   
   // Popular SNS Projects
   {
-    canisterId: 'zfcdd-tqaaa-aaaaq-aaaga-cai',
+    canisterId: '2ouva-viaaa-aaaaq-aaamq-cai',
     name: 'OpenChat',
     symbol: 'CHAT',
     logo: '💬',
@@ -67,7 +67,7 @@ const POPULAR_TOKENS = [
     category: 'Social',
   },
   {
-    canisterId: 'uf2wh-taaaa-aaaaq-aabna-cai',
+    canisterId: 'xyo2o-gyaaa-aaaal-qb55a-cai',
     name: 'Kinic',
     symbol: 'KINIC',
     logo: '🔍',
@@ -75,7 +75,7 @@ const POPULAR_TOKENS = [
     category: 'Utility',
   },
   {
-    canisterId: 'rffwt-piaaa-aaaaq-aabqq-cai',
+    canisterId: '6rdgd-kyaaa-aaaaq-aaavq-cai',
     name: 'Hot or Not',
     symbol: 'HOT',
     logo: '🔥',
@@ -111,7 +111,7 @@ const POPULAR_TOKENS = [
   
   // Meme Tokens
   {
-    canisterId: 'rffwt-piaaa-aaaaq-aabqq-cai',
+    canisterId: 'druyg-tyaaa-aaaaq-aactq-cai',
     name: 'ICPuppies',
     symbol: 'ICPUP',
     logo: '🐶',
