@@ -9,6 +9,7 @@ import AddTokenModal from './AddTokenModal';
 import TokenSelectionModal from './TokenSelectionModal';
 import TransactionHistory from './TransactionHistory';
 import TransakBuyModal from './TransakBuyModal';
+import SwapModal from './SwapModal';
 import TokenIcon from './TokenIcon';
 import { DEFAULT_TOKENS, getAllBalances, formatTokenAmount, getRecentTransactions, getTokenMetadata } from '../icp/icrc';
 import { fetchTokenPrices, formatUSDPrice, formatPriceChange } from '../icp/priceApi';
@@ -36,6 +37,7 @@ export default function WalletPage({ address, onBack }) {
   const [addTokenModal, setAddTokenModal] = useState(false);
   const [transactionHistoryModal, setTransactionHistoryModal] = useState(false);
   const [transakBuyModal, setTransakBuyModal] = useState(false);
+  const [swapModal, setSwapModal] = useState(false);
 
   // Load custom tokens and hidden tokens from backend (not localStorage)
   useEffect(() => {
@@ -444,7 +446,7 @@ export default function WalletPage({ address, onBack }) {
               </button>
 
               <button
-                onClick={() => alert('Swap feature coming soon!')}
+                onClick={() => setSwapModal(true)}
                 className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-purple-500/30 bg-gradient-to-br from-purple-950/50 to-purple-900/30 hover:from-purple-900/60 hover:to-purple-800/40 backdrop-blur-xl transition-all shadow-lg hover:shadow-purple-500/30"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity" />
@@ -747,6 +749,11 @@ export default function WalletPage({ address, onBack }) {
         onClose={() => setTransakBuyModal(false)}
         userAddress={address}
         defaultCurrency="ICP"
+      />
+      <SwapModal
+        isOpen={swapModal}
+        onClose={() => setSwapModal(false)}
+        tokens={tokens}
       />
     </div>
   );
