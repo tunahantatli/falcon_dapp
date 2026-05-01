@@ -54,16 +54,22 @@ export default function WalletPage({ address, onBack }) {
         ]);
         
         // Transform backend custom tokens to frontend format
-        const transformedTokens = customTokensData.map(token => ({
-          id: token.id,
-          canisterId: token.canisterId,
-          name: token.name,
-          symbol: token.symbol,
-          decimals: Number(token.decimals),
-          logo: null,
-          isCustom: true,
-          fee: 0, // Will be fetched when needed
-        }));
+        // If token matches a known DEFAULT_TOKEN, use its logo and mark as not-custom
+        const transformedTokens = customTokensData.map(token => {
+          const known = DEFAULT_TOKENS.find(
+            d => d.canisterId === token.canisterId || d.symbol === token.symbol
+          );
+          return {
+            id: token.id,
+            canisterId: token.canisterId,
+            name: known?.name || token.name,
+            symbol: known?.symbol || token.symbol,
+            decimals: known?.decimals ?? Number(token.decimals),
+            logo: known?.logo || null,
+            isCustom: !known,
+            fee: known?.fee || 0,
+          };
+        });
         
         setCustomTokens(transformedTokens);
         setHiddenTokens(hiddenTokensData);
