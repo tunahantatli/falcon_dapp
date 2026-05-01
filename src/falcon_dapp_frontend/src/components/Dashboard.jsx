@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingDown, TrendingUp, Wallet, ExternalLink, Activity, Target, TrendingUpDown } from 'lucide-react';
+import { TrendingDown, TrendingUp, Wallet, ExternalLink, Activity, Target, TrendingUpDown, ChevronDown, ChevronUp } from 'lucide-react';
 import Container from './Container';
 
 const TOKEN_CATEGORIES = {
@@ -46,6 +46,25 @@ const DEX_CONFIG = {
     url: 'https://jup.ag', 
     limitUrl: 'https://jup.ag/limit',
     theme: 'border-orange-400/30 bg-orange-500/10 text-orange-200 hover:border-orange-400/50 hover:bg-orange-500/20' 
+  },
+};
+
+const MOCK_TCN_SIGNALS = {
+  BTC: {
+    horizon: '24h',
+    spot: {
+      direction: 'down',
+      changePct: 1.9,
+      targetPrice: 92450.0,
+      confidence: 86,
+      summary: 'Model momentum ve hacim ayrışmasına göre kısa vadede geri çekilme bekliyor.',
+    },
+    leverage: {
+      direction: 'kisa',
+      range: '3x - 4x',
+      confidence: 81,
+      note: 'Spot düşüş sinyali ile uyumlu düşük-orta agresif kaldıraç önerisi.',
+    },
   },
 };
 
@@ -129,6 +148,13 @@ function MetricCard({ icon: Icon, title, value, subtitle, iconColor }) {
 }
 
 function CategorySection({ title, tokens, walletType }) {
+  const [expandedTokenId, setExpandedTokenId] = React.useState(null);
+
+  const toggleSignalDetails = (token) => {
+    if (token.symbol !== 'BTC') return;
+    setExpandedTokenId((prev) => (prev === token.id ? null : token.id));
+  };
+
   return (
     <div className="mb-8">
       <div className="mb-4 flex items-center gap-3">
@@ -151,49 +177,89 @@ function CategorySection({ title, tokens, walletType }) {
             <tbody className="divide-y divide-white/10">
               {tokens.map((token) => {
                 const priceDisplay = `$${token.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}`;
+                const isBtc = token.symbol === 'BTC';
+                const btcSignal = isBtc ? MOCK_TCN_SIGNALS.BTC : null;
+                const isExpanded = expandedTokenId === token.id;
+                const trendChip = token.trend === 'up'
+                  ? <div className="inline-flex items-center gap-1.5 text-emerald-200"><TrendingUp className="h-4 w-4" />Up</div>
+                  : <div className="inline-flex items-center gap-1.5 text-rose-200"><TrendingDown className="h-4 w-4" />Down</div>;
                 
                 return (
-                  <tr key={token.id} className="text-sm even:bg-white/[0.02]">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="font-semibold text-white">{token.symbol}</div>
-                        <div className="text-xs text-white/50">{token.pair}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 font-mono text-white/85">{priceDisplay}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-9 text-right font-semibold tabular-nums ${scoreClass(token.score)}`}>
-                          {token.score}
+                  <React.Fragment key={token.id}>
+                    <tr className={`text-sm even:bg-white/[0.02] ${isBtc ? 'cursor-pointer transition hover:bg-white/[0.06]' : ''}`} onClick={() => toggleSignalDetails(token)}>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="font-semibold text-white">{token.symbol}</div>
+                          <div className="text-xs text-white/50">{token.pair}</div>
+                          {isBtc && (
+                            <div className="ml-2 inline-flex items-center gap-1 rounded-full border border-sky-400/30 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-sky-200">
+                              Demo TCN
+                              {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                            </div>
+                          )}
                         </div>
-                        <div className="h-1.5 w-20 overflow-hidden rounded-full bg-white/10">
-                          <div
-                            className={`h-full rounded-full ${scoreBarClass(token.score)}`}
-                            style={{ width: `${Math.max(0, Math.min(100, token.score))}%` }}
-                          />
+                      </td>
+                      <td className="px-6 py-4 font-mono text-white/85">{priceDisplay}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 text-right font-semibold tabular-nums ${scoreClass(token.score)}`}>
+                            {token.score}
+                          </div>
+                          <div className="h-1.5 w-20 overflow-hidden rounded-full bg-white/10">
+                            <div
+                              className={`h-full rounded-full ${scoreBarClass(token.score)}`}
+                              style={{ width: `${Math.max(0, Math.min(100, token.score))}%` }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {token.trend === 'up' ? (
-                        <div className="inline-flex items-center gap-1.5 text-emerald-200">
-                          <TrendingUp className="h-4 w-4" />
-                          Up
-                        </div>
-                      ) : (
-                        <div className="inline-flex items-center gap-1.5 text-rose-200">
-                          <TrendingDown className="h-4 w-4" />
-                          Down
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <TradeButton 
-                        walletType={walletType} 
-                        tokenChain={token.chain}
-                      />
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-6 py-4">{trendChip}</td>
+                      <td className="px-6 py-4">
+                        <TradeButton 
+                          walletType={walletType} 
+                          tokenChain={token.chain}
+                        />
+                      </td>
+                    </tr>
+                    {isBtc && isExpanded && btcSignal && (
+                      <tr className="bg-white/[0.03]">
+                        <td colSpan={5} className="px-6 pb-5 pt-1">
+                          <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+                            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                              <div className="text-xs font-semibold tracking-[0.18em] text-white/60">BTC TCN FORECAST ({btcSignal.horizon})</div>
+                              <div className="text-xs text-white/50">Demonstration signal preview</div>
+                            </div>
+
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <div className="rounded-lg border border-rose-400/20 bg-rose-500/10 p-3">
+                                <div className="text-xs font-semibold tracking-wide text-rose-200">SPOT SIGNAL</div>
+                                <div className="mt-2 text-sm text-white/90">
+                                  BTC price could <span className="font-semibold text-rose-200">drop by {btcSignal.spot.changePct}%</span>.
+                                </div>
+                                <div className="mt-1 text-sm text-white/90">
+                                  Target price: <span className="font-mono text-white">${btcSignal.spot.targetPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                </div>
+                                <div className="mt-2 text-xs text-white/70">TCN Confidence: <span className="font-semibold text-rose-200">{btcSignal.spot.confidence}%</span></div>
+                                <div className="mt-2 text-xs text-white/70">Model expects a short-term pullback based on momentum and volume divergence.</div>
+                              </div>
+
+                              <div className="rounded-lg border border-orange-400/20 bg-orange-500/10 p-3">
+                                <div className="text-xs font-semibold tracking-wide text-orange-200">LEVERAGE SIGNAL</div>
+                                <div className="mt-2 text-sm text-white/90">
+                                  Recommendation aligned with spot signal: <span className="font-semibold text-orange-200">{btcSignal.leverage.direction === 'kisa' ? 'SHORT' : 'LONG'}</span>
+                                </div>
+                                <div className="mt-1 text-sm text-white/90">
+                                  Suggested leverage: <span className="font-semibold text-white">{btcSignal.leverage.range}</span>
+                                </div>
+                                <div className="mt-2 text-xs text-white/70">TCN Confidence: <span className="font-semibold text-orange-200">{btcSignal.leverage.confidence}%</span></div>
+                                <div className="mt-2 text-xs text-white/70">Low-to-medium aggressive leverage suggestion aligned with the bearish spot outlook.</div>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </tbody>
