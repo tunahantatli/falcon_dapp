@@ -1,12 +1,18 @@
 {
   "canisters": {
+    "ftcng_ledger": {
+      "type": "custom",
+      "candid": "ledger.did",
+      "wasm": "ic-icrc1-ledger.wasm.gz"
+    },
     "falcon_dapp_backend": {
       "main": "src/falcon_dapp_backend/main.mo",
       "type": "motoko"
     },
     "falcon_dapp_frontend": {
       "dependencies": [
-        "falcon_dapp_backend"
+        "falcon_dapp_backend",
+        "ftcng_ledger"
       ],
       "source": [
         "src/falcon_dapp_frontend/dist"

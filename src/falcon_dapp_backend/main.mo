@@ -1,6 +1,7 @@
 import Debug "mo:base/Debug";
 import HashMap "mo:base/HashMap";
 import Principal "mo:base/Principal";
+import Token "Token";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Int "mo:base/Int";
@@ -88,6 +89,11 @@ persistent actor FalconBackend {
   // 🚀 NEW: Transaction History Storage
   var transactionEntries : [(Text, [Transaction])] = [];
   transient var userTransactions = HashMap.HashMap<Text, [Transaction]>(0, Text.equal, Text.hash);
+
+  // ── FTCNG Ledger Yapılandırması (Stable) ─────────────────────────────────
+  // Deploy sonrası: dfx canister id ftcng_ledger  →  setFtcngLedgerId("...")
+  var ftcngLedgerId  : Text = ""; // boş = henüz yapılandırılmadı
+  var ownerPrincipal : Text = ""; // ilk setFtcngLedgerId çağrısında otomatik set edilir
 
   system func preupgrade() {
     userEntries := Iter.toArray(users.entries());
@@ -641,5 +647,86 @@ persistent actor FalconBackend {
       };
       case null { return []; };
     };
+  };
+
+  // ==========================================
+  // 🥇 FTCNG ALTIN TOKEN – ICRC-1 ENTEGRASYONU
+  // ==========================================
+
+  // ── Admin: Ledger Canister ID'yi kaydet ─────────────────────────────────
+  // İlk çağrıda kim çağırırsa deployer (owner) olarak kaydedilir.
+  // Sonraki çağrılarda sadece owner değiştirebilir.
+  public shared (msg) func setFtcngLedgerId(canisterId : Text) : async Bool {
+    if (ownerPrincipal == "") {
+      ownerPrincipal := Principal.toText(msg.caller);
+      ftcngLedgerId  := canisterId;
+      Debug.print("✅ FTCNG Ledger ID ayarlandı: " # canisterId);
+      return true;
+    };
+    if (Principal.toText(msg.caller) != ownerPrincipal) {
+      Debug.print("⛔ Yetkisiz setFtcngLedgerId çağrısı: " # Principal.toText(msg.caller));
+      return false;
+    };
+    ftcngLedgerId := canisterId;
+    Debug.print("✅ FTCNG Ledger ID güncellendi: " # canisterId);
+    return true;
+  };
+
+  public query func getFtcngLedgerId() : async Text { ftcngLedgerId };
+
+  // ── Dahili: Ledger actor referansı ──────────────────────────────────────
+  private func ftcngLedger() : Token.LedgerInterface {
+    assert (ftcngLedgerId != ""); // yapılandırılmamışsa hata fırlat
+    Token.getLedger(Principal.fromText(ftcngLedgerId));
+  };
+
+  // ── Kullanıcının FTCNG (altın) bakiyesini sorgula ───────────────────────
+  public func getGoldBalance(user : Principal) : async Nat {
+    await ftcngLedger().icrc1_balance_of({ owner = user; subaccount = null });
+  };
+
+  // ── FTCNG Token Metadata ─────────────────────────────────────────────────
+  public func getFtcngTokenInfo() : async {
+    name        : Text;
+    symbol      : Text;
+    decimals    : Nat8;
+    fee         : Nat;
+    totalSupply : Nat;
+  } {
+    let l = ftcngLedger();
+    let name        = await l.icrc1_name();
+    let symbol      = await l.icrc1_symbol();
+    let decimals    = await l.icrc1_decimals();
+    let fee         = await l.icrc1_fee();
+    let totalSupply = await l.icrc1_total_supply();
+    { name; symbol; decimals; fee; totalSupply };
+  };
+
+  // ── RWA Altın Token Basımı (sadece TCN admin) ───────────────────────────
+  // grams: kaç gram FTCNG basılacak (tam sayı, 8 decimals otomatik uygulanır)
+  // Örnek: grams = 1  →  100_000_000 base unit
+  public shared (msg) func mintGoldToken(
+    recipient : Principal,
+    grams     : Nat
+  ) : async Token.TransferResult {
+    if (ownerPrincipal == "" or Principal.toText(msg.caller) != ownerPrincipal) {
+      return #Err(
+        #GenericError {
+          message    = "Unauthorized: only the TCN admin may mint";
+          error_code = 403;
+        }
+      );
+    };
+
+    let args : Token.TransferArgs = {
+      to              = { owner = recipient; subaccount = null };
+      amount          = Token.gramsToBase(grams); // 8 decimals → grams * 10^8
+      fee             = null;  // minting account için fee 0
+      memo            = null;
+      from_subaccount = null;
+      created_at_time = null;
+    };
+
+    await ftcngLedger().icrc1_transfer(args);
   };
 };
