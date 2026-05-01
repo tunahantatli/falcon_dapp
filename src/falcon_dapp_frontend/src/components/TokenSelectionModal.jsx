@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, Wallet } from 'lucide-react';
+import { X, Search } from 'lucide-react';
+import TokenIcon from './TokenIcon';
 
 const TokenSelectionModal = ({ isOpen, onClose, tokens, onSelectToken, title = "Select Token" }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -83,13 +84,7 @@ const TokenSelectionModal = ({ isOpen, onClose, tokens, onSelectToken, title = "
                   onClick={() => handleSelectToken(token)}
                   className="w-full flex items-center gap-4 p-4 rounded-xl bg-purple-950/30 border border-purple-500/10 hover:border-purple-500/30 hover:bg-purple-950/50 transition-all group"
                 >
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-purple-500/20 border border-purple-500/30 group-hover:bg-purple-500/30 transition-colors">
-                    {token.logo ? (
-                      <img src={token.logo} alt={token.symbol} className="w-8 h-8 rounded-full" />
-                    ) : (
-                      <Wallet className="w-6 h-6 text-purple-400" />
-                    )}
-                  </div>
+                  <TokenIcon token={token} size="lg" />
                   <div className="flex-1 text-left">
                     <div className="flex items-center gap-2">
                       <span className="text-base font-semibold text-purple-100 group-hover:text-white transition-colors">

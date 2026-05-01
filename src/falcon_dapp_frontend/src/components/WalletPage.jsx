@@ -9,6 +9,7 @@ import AddTokenModal from './AddTokenModal';
 import TokenSelectionModal from './TokenSelectionModal';
 import TransactionHistory from './TransactionHistory';
 import TransakBuyModal from './TransakBuyModal';
+import TokenIcon from './TokenIcon';
 import { DEFAULT_TOKENS, getAllBalances, formatTokenAmount, getRecentTransactions, getTokenMetadata } from '../icp/icrc';
 import { fetchTokenPrices, formatUSDPrice, formatPriceChange } from '../icp/priceApi';
 import { 
@@ -508,13 +509,7 @@ export default function WalletPage({ address, onBack }) {
                       className="flex items-center justify-between p-4 rounded-xl bg-purple-950/30 border border-purple-500/10 hover:border-purple-500/30 hover:bg-purple-950/50 transition-all group"
                     >
                       <div className="flex items-center gap-3 flex-1">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/30">
-                          {token.logo ? (
-                            <img src={token.logo} alt={token.symbol} className="w-6 h-6" />
-                          ) : (
-                            <Wallet className="w-5 h-5 text-purple-400" />
-                          )}
-                        </div>
+                        <TokenIcon token={token} size="md" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <div className="text-sm font-semibold text-purple-100">{token.symbol}</div>
