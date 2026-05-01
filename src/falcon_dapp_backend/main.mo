@@ -579,6 +579,37 @@ persistent actor FalconBackend {
   // 🚀 TRANSACTION HISTORY CACHE
   // ==========================================
 
+  // ── Dahili: auth kontrolsüz tx kaydı (sadece backend içinden çağrılır) ──
+  private func recordTxInternal(
+    userAddress : Text,
+    txId        : Text,
+    from        : Text,
+    to          : Text,
+    amount      : Float,
+    tokenSymbol : Text,
+    txType      : Text
+  ) {
+    let now = Time.now();
+    let newTx : Transaction = {
+      id          = txId;
+      timestamp   = now;
+      from        = from;
+      to          = to;
+      amount      = amount;
+      tokenSymbol = tokenSymbol;
+      txType      = txType;
+    };
+    let currentTxs = switch (userTransactions.get(userAddress)) {
+      case (?txs) { txs };
+      case null   { [] };
+    };
+    let updatedTxs = Array.append<Transaction>([newTx], currentTxs);
+    let limitedTxs = if (updatedTxs.size() > 100) {
+      Array.subArray<Transaction>(updatedTxs, 0, 100);
+    } else { updatedTxs };
+    userTransactions.put(userAddress, limitedTxs);
+  };
+
   // Add transaction to user history
   public shared(_msg) func addTransaction(
     userAddress : Text,
@@ -595,35 +626,7 @@ persistent actor FalconBackend {
       Debug.print("⛔ Unauthorized transaction attempt by: " # caller # " for address: " # userAddress);
       return false;
     };
-    
-    let now = Time.now();
-    
-    let newTx : Transaction = {
-      id = txId;
-      timestamp = now;
-      from = from;
-      to = to;
-      amount = amount;
-      tokenSymbol = tokenSymbol;
-      txType = txType;
-    };
-
-    let currentTxs = switch (userTransactions.get(userAddress)) {
-      case (?txs) { txs };
-      case null { [] };
-    };
-
-    // Prepend new transaction (most recent first)
-    let updatedTxs = Array.append<Transaction>([newTx], currentTxs);
-    
-    // Keep only last 100 transactions per user to save storage
-    let limitedTxs = if (updatedTxs.size() > 100) {
-      Array.subArray<Transaction>(updatedTxs, 0, 100);
-    } else {
-      updatedTxs;
-    };
-
-    userTransactions.put(userAddress, limitedTxs);
+    recordTxInternal(userAddress, txId, from, to, amount, tokenSymbol, txType);
     return true;
   };
 
@@ -727,6 +730,24 @@ persistent actor FalconBackend {
       created_at_time = null;
     };
 
-    await ftcngLedger().icrc1_transfer(args);
+    let result = await ftcngLedger().icrc1_transfer(args);
+
+    // Transfer başarılıysa işlemi otomatik olarak geçmişe kaydet
+    switch (result) {
+      case (#Ok(_blockIndex)) {
+        recordTxInternal(
+          Principal.toText(recipient),
+          "MINT-" # Int.toText(Time.now()),
+          "SYSTEM",
+          Principal.toText(recipient),
+          Float.fromInt(grams),
+          "FTCNG",
+          "RWA_MINT"
+        );
+      };
+      case (#Err(_)) {};
+    };
+
+    result;
   };
 };
